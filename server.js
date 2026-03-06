@@ -16,13 +16,21 @@ const CLIENT_SECRET = "X1Zbqu1pTqO9Ep5dTq9qekzd90X4djaT"
 const REDIRECT_URI = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
 
 // =========================
+// WHITELIST
+// =========================
+
+const whitelist = [
+    "1479505514013659289"
+]
+
+// =========================
 // HOME
 // =========================
 
 app.get("/", (req,res)=>{
     res.json({
-        api: "NexusComunication",
-        status: "online"
+        api:"NexusComunication",
+        status:"online"
     })
 })
 
@@ -57,10 +65,6 @@ app.get("/auth/discord/callback", async (req,res)=>{
 
     try{
 
-        // =========================
-        // GET ACCESS TOKEN
-        // =========================
-
         const params = new URLSearchParams()
 
         params.append("client_id", CLIENT_ID)
@@ -83,10 +87,6 @@ app.get("/auth/discord/callback", async (req,res)=>{
 
         const accessToken = tokenResponse.data.access_token
 
-        // =========================
-        // GET USER DATA
-        // =========================
-
         const userResponse = await axios.get(
             "https://discord.com/api/users/@me",
             {
@@ -96,19 +96,33 @@ app.get("/auth/discord/callback", async (req,res)=>{
             }
         )
 
+        const user = userResponse.data
+
+        // =========================
+        // WHITELIST CHECK
+        // =========================
+
+        if(!whitelist.includes(user.id)){
+
+            return res.json({
+                login:false,
+                message:"User not whitelisted"
+            })
+
+        }
+
         res.json({
-            login: true,
-            user: userResponse.data
+            login:true,
+            user:user
         })
 
     }catch(err){
 
-        console.error("DISCORD ERROR:")
         console.error(err.response?.data || err.message)
 
         res.status(500).json({
-            error: true,
-            message: err.response?.data || err.message
+            error:true,
+            message:err.response?.data || err.message
         })
 
     }
