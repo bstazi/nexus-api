@@ -6,7 +6,7 @@ const cors = require("cors")
 
 const app = express()
 
-// necessario su Render
+// necessario per Render
 app.set("trust proxy", 1)
 
 app.use(cors())
@@ -16,7 +16,9 @@ app.use(session({
     secret: "nexus_secret_key",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }
+    cookie: {
+        secure: false
+    }
 }))
 
 app.use(passport.initialize())
@@ -57,17 +59,19 @@ passport.use(new DiscordStrategy({
     try {
 
         const user = {
-            id: profile.id || null,
-            username: profile.username || profile.global_name || "discord_user",
-            avatar: profile.avatar || null,
-            email: profile.email || null
+            id: profile.id,
+            username: profile.username || profile.global_name,
+            avatar: profile.avatar,
+            email: profile.email
         }
 
         return done(null, user)
 
     } catch(err) {
-        console.error("Discord error:", err)
+
+        console.error("Discord OAuth error:", err)
         return done(err, null)
+
     }
 
 }))
@@ -76,7 +80,7 @@ passport.use(new DiscordStrategy({
 // ROUTES
 // =========================
 
-// test api
+// test API
 app.get("/", (req,res)=>{
     res.json({
         name:"NexusComunication API",
@@ -91,7 +95,7 @@ app.get("/auth/discord",
 
 // callback discord
 app.get("/auth/discord/callback",
-    passport.authenticate("discord",{ failureRedirect: "/error" }),
+    passport.authenticate("discord", { failureRedirect: "/error" }),
     (req,res)=>{
         res.json({
             login:true,
