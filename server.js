@@ -27,7 +27,7 @@ app.use(passport.session())
 // =========================
 
 const CLIENT_ID = "1479505514013659289"
-const CLIENT_SECRET = "04a7Y8bS0Mk7aEDt11fs-aDa1MQgNW4y"
+const CLIENT_SECRET = "NTYu1gAdj5XXy4a3vW0eQzn3nK-np86O"
 const CALLBACK_URL = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
 
 // =========================
