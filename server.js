@@ -80,24 +80,19 @@ app.get("/auth/discord/callback", async (req,res)=>{
             }
         )
 
-        const user = userResponse.data
-
         res.json({
             login:true,
-            user:user
+            user:userResponse.data
         })
 
     }catch(err){
 
-    console.error("DISCORD TOKEN ERROR:")
-    console.error(err.response?.data || err)
+        console.error(err.response?.data || err)
+        res.status(500).send("OAuth Error")
 
-    res.status(500).json({
-        error: true,
-        discord_error: err.response?.data || err.message
-    })
+    }
 
-}
+})
 
 // =========================
 // SERVER
