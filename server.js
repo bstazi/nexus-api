@@ -92,8 +92,8 @@ app.get("/auth/discord/callback", async (req,res)=>{
     console.error("DISCORD TOKEN ERROR:")
     console.error(err.response?.data || err)
 
-    res.json({
-        error:true,
+    res.status(500).json({
+        error: true,
         discord_error: err.response?.data || err.message
     })
 
