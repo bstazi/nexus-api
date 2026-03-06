@@ -21,26 +21,30 @@ const REDIRECT_URI = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
 
 app.get("/", (req,res)=>{
     res.json({
-        api:"NexusComunication",
-        status:"online"
+        api: "NexusComunication",
+        status: "online"
     })
 })
 
 // =========================
-// LOGIN
+// LOGIN DISCORD
 // =========================
 
 app.get("/auth/discord",(req,res)=>{
 
-    const url =
-    `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20email`
+    const discordURL =
+    `https://discord.com/api/oauth2/authorize`+
+    `?client_id=${CLIENT_ID}`+
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`+
+    `&response_type=code`+
+    `&scope=identify%20email`
 
-    res.redirect(url)
+    res.redirect(discordURL)
 
 })
 
 // =========================
-// CALLBACK
+// CALLBACK DISCORD
 // =========================
 
 app.get("/auth/discord/callback", async (req,res)=>{
@@ -53,23 +57,35 @@ app.get("/auth/discord/callback", async (req,res)=>{
 
     try{
 
+        // =========================
+        // GET ACCESS TOKEN
+        // =========================
+
+        const params = new URLSearchParams()
+
+        params.append("client_id", CLIENT_ID)
+        params.append("client_secret", CLIENT_SECRET)
+        params.append("grant_type", "authorization_code")
+        params.append("code", code)
+        params.append("redirect_uri", REDIRECT_URI)
+        params.append("scope", "identify email")
+
         const tokenResponse = await axios.post(
             "https://discord.com/api/oauth2/token",
-            new URLSearchParams({
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                grant_type: "authorization_code",
-                code: code,
-                redirect_uri: REDIRECT_URI
-            }),
+            params,
             {
                 headers:{
-                    "Content-Type":"application/x-www-form-urlencoded"
+                    "Content-Type":"application/x-www-form-urlencoded",
+                    "User-Agent":"NexusCommunication"
                 }
             }
         )
 
         const accessToken = tokenResponse.data.access_token
+
+        // =========================
+        // GET USER DATA
+        // =========================
 
         const userResponse = await axios.get(
             "https://discord.com/api/users/@me",
@@ -81,14 +97,19 @@ app.get("/auth/discord/callback", async (req,res)=>{
         )
 
         res.json({
-            login:true,
-            user:userResponse.data
+            login: true,
+            user: userResponse.data
         })
 
     }catch(err){
 
-        console.error(err.response?.data || err)
-        res.status(500).send("OAuth Error")
+        console.error("DISCORD ERROR:")
+        console.error(err.response?.data || err.message)
+
+        res.status(500).json({
+            error: true,
+            message: err.response?.data || err.message
+        })
 
     }
 
