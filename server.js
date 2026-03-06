@@ -1,25 +1,11 @@
 const express = require("express")
-const session = require("express-session")
-const passport = require("passport")
-const DiscordStrategy = require("passport-discord").Strategy
+const axios = require("axios")
 const cors = require("cors")
 
 const app = express()
 
-// necessario per Render proxy
-app.set("trust proxy", 1)
-
 app.use(cors())
 app.use(express.json())
-
-app.use(session({
-    secret: "nexus_secret_key",
-    resave: false,
-    saveUninitialized: false
-}))
-
-app.use(passport.initialize())
-app.use(passport.session())
 
 // =========================
 // DISCORD CONFIG
@@ -27,41 +13,10 @@ app.use(passport.session())
 
 const CLIENT_ID = "1479505514013659289"
 const CLIENT_SECRET = "X1Zbqu1pTqO9Ep5dTq9qekzd90X4djaT"
-const CALLBACK_URL = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
+const REDIRECT_URI = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
 
 // =========================
-// PASSPORT
-// =========================
-
-passport.serializeUser((user, done) => {
-    done(null, user)
-})
-
-passport.deserializeUser((obj, done) => {
-    done(null, obj)
-})
-
-passport.use(new DiscordStrategy({
-    clientID: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    callbackURL: CALLBACK_URL,
-    scope: ["identify", "email"]
-},
-(accessToken, refreshToken, profile, done) => {
-
-    const user = {
-        id: profile.id,
-        username: profile.username,
-        avatar: profile.avatar,
-        email: profile.email
-    }
-
-    return done(null, user)
-
-}))
-
-// =========================
-// ROUTES
+// HOME
 // =========================
 
 app.get("/", (req,res)=>{
@@ -71,17 +26,74 @@ app.get("/", (req,res)=>{
     })
 })
 
-app.get("/auth/discord",
-    passport.authenticate("discord")
-)
+// =========================
+// LOGIN
+// =========================
 
-app.get("/auth/discord/callback",
-    passport.authenticate("discord", { failureRedirect: "/" }),
-    (req,res)=>{
+app.get("/auth/discord",(req,res)=>{
+
+    const url =
+    `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20email`
+
+    res.redirect(url)
+
+})
+
+// =========================
+// CALLBACK
+// =========================
+
+app.get("/auth/discord/callback", async (req,res)=>{
+
+    const code = req.query.code
+
+    if(!code){
+        return res.send("No code provided")
+    }
+
+    try{
+
+        const tokenResponse = await axios.post(
+            "https://discord.com/api/oauth2/token",
+            new URLSearchParams({
+                client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET,
+                grant_type: "authorization_code",
+                code: code,
+                redirect_uri: REDIRECT_URI
+            }),
+            {
+                headers:{
+                    "Content-Type":"application/x-www-form-urlencoded"
+                }
+            }
+        )
+
+        const accessToken = tokenResponse.data.access_token
+
+        const userResponse = await axios.get(
+            "https://discord.com/api/users/@me",
+            {
+                headers:{
+                    Authorization:`Bearer ${accessToken}`
+                }
+            }
+        )
+
+        const user = userResponse.data
+
         res.json({
             login:true,
-            user:req.user
+            user:user
         })
+
+    }catch(err){
+
+        console.error(err.response?.data || err)
+        res.status(500).send("OAuth Error")
+
+    }
+
 })
 
 // =========================
@@ -90,6 +102,6 @@ app.get("/auth/discord/callback",
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, ()=>{
-    console.log("Nexus API running on port "+PORT)
+app.listen(PORT,()=>{
+    console.log("Server running on port "+PORT)
 })
