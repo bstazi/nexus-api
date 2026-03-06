@@ -6,7 +6,7 @@ const cors = require("cors")
 
 const app = express()
 
-// necessario per Render
+// necessario per Render proxy
 app.set("trust proxy", 1)
 
 app.use(cors())
@@ -15,10 +15,7 @@ app.use(express.json())
 app.use(session({
     secret: "nexus_secret_key",
     resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: false
-    }
+    saveUninitialized: false
 }))
 
 app.use(passport.initialize())
@@ -33,7 +30,7 @@ const CLIENT_SECRET = "X1Zbqu1pTqO9Ep5dTq9qekzd90X4djaT"
 const CALLBACK_URL = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
 
 // =========================
-// PASSPORT SERIALIZE
+// PASSPORT
 // =========================
 
 passport.serializeUser((user, done) => {
@@ -44,35 +41,22 @@ passport.deserializeUser((obj, done) => {
     done(null, obj)
 })
 
-// =========================
-// DISCORD STRATEGY
-// =========================
-
 passport.use(new DiscordStrategy({
     clientID: CLIENT_ID,
     clientSecret: CLIENT_SECRET,
     callbackURL: CALLBACK_URL,
-    scope: ["identify", "email", "guilds"]
+    scope: ["identify", "email"]
 },
 (accessToken, refreshToken, profile, done) => {
 
-    try {
-
-        const user = {
-            id: profile.id,
-            username: profile.username || profile.global_name,
-            avatar: profile.avatar,
-            email: profile.email
-        }
-
-        return done(null, user)
-
-    } catch(err) {
-
-        console.error("Discord OAuth error:", err)
-        return done(err, null)
-
+    const user = {
+        id: profile.id,
+        username: profile.username,
+        avatar: profile.avatar,
+        email: profile.email
     }
+
+    return done(null, user)
 
 }))
 
@@ -80,35 +64,24 @@ passport.use(new DiscordStrategy({
 // ROUTES
 // =========================
 
-// test API
 app.get("/", (req,res)=>{
     res.json({
-        name:"NexusComunication API",
+        api:"NexusComunication",
         status:"online"
     })
 })
 
-// login discord
 app.get("/auth/discord",
     passport.authenticate("discord")
 )
 
-// callback discord
 app.get("/auth/discord/callback",
-    passport.authenticate("discord", { failureRedirect: "/error" }),
+    passport.authenticate("discord", { failureRedirect: "/" }),
     (req,res)=>{
         res.json({
             login:true,
             user:req.user
         })
-})
-
-// errore login
-app.get("/error",(req,res)=>{
-    res.json({
-        login:false,
-        message:"Discord authentication failed"
-    })
 })
 
 // =========================
@@ -117,6 +90,6 @@ app.get("/error",(req,res)=>{
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT,()=>{
-    console.log("Nexus API running on port " + PORT)
+app.listen(PORT, ()=>{
+    console.log("Nexus API running on port "+PORT)
 })
