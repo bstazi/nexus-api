@@ -20,7 +20,7 @@ const REDIRECT_URI = "https://nexus-api-production-8078.up.railway.app/auth/disc
 // =========================
 
 const whitelist = [
-    "332617746389008395"
+    "332617746389008395" // il tuo ID discord
 ]
 
 // =========================
@@ -72,6 +72,7 @@ app.get("/auth/discord/callback", async (req,res)=>{
         params.append("grant_type", "authorization_code")
         params.append("code", code)
         params.append("redirect_uri", REDIRECT_URI)
+        params.append("scope", "identify email")
 
         const tokenResponse = await axios.post(
             "https://discord.com/api/v10/oauth2/token",
@@ -102,26 +103,55 @@ app.get("/auth/discord/callback", async (req,res)=>{
 
         if(!whitelist.includes(user.id)){
 
-            return res.json({
-                login:false,
-                message:"User not whitelisted"
-            })
+            return res.send(`
+            <html>
+            <body style="background:#0b1424;color:white;font-family:sans-serif;text-align:center;margin-top:100px;">
+            <h2>Accesso negato</h2>
+            <p>Utente non autorizzato</p>
+            </body>
+            </html>
+            `)
 
         }
 
-        res.json({
+        // =========================
+        // SUCCESS LOGIN
+        // =========================
+
+        res.send(`
+        <html>
+        <body style="background:#0b1424;color:white;font-family:sans-serif;text-align:center;margin-top:100px;">
+
+        <h2>Login completato</h2>
+        <p>Puoi tornare al launcher.</p>
+
+        <script>
+        window.opener.postMessage(
+        {
             login:true,
-            user:user
-        })
+            user:${JSON.stringify(user)}
+        },
+        "*"
+        )
+
+        window.close()
+        </script>
+
+        </body>
+        </html>
+        `)
 
     }catch(err){
 
         console.error(err.response?.data || err.message)
 
-        res.status(500).json({
-            error:true,
-            message:err.response?.data || err.message
-        })
+        res.send(`
+        <html>
+        <body style="background:#0b1424;color:white;font-family:sans-serif;text-align:center;margin-top:100px;">
+        <h2>Errore login</h2>
+        </body>
+        </html>
+        `)
 
     }
 
@@ -133,6 +163,6 @@ app.get("/auth/discord/callback", async (req,res)=>{
 
 const PORT = process.env.PORT || 8080
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on port " + PORT)
+app.listen(PORT,"0.0.0.0",()=>{
+    console.log("Server running on port "+PORT)
 })
