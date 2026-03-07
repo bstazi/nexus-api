@@ -72,15 +72,13 @@ app.get("/auth/discord/callback", async (req,res)=>{
         params.append("grant_type", "authorization_code")
         params.append("code", code)
         params.append("redirect_uri", REDIRECT_URI)
-        params.append("scope", "identify email")
 
         const tokenResponse = await axios.post(
-    "https://discord.com/api/v10/oauth2/token",
+            "https://discord.com/api/v10/oauth2/token",
             params,
             {
                 headers:{
-                    "Content-Type":"application/x-www-form-urlencoded",
-                    "User-Agent":"NexusCommunication"
+                    "Content-Type":"application/x-www-form-urlencoded"
                 }
             }
         )
