@@ -20,7 +20,7 @@ const REDIRECT_URI = "https://nexus-api-production-8078.up.railway.app/auth/disc
 // =========================
 
 const whitelist = [
-    "1479505514013659289"
+    "332617746389008395"
 ]
 
 // =========================
