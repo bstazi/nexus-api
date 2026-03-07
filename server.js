@@ -13,7 +13,7 @@ app.use(express.json())
 
 const CLIENT_ID = "1479505514013659289"
 const CLIENT_SECRET = "X1Zbqu1pTqO9Ep5dTq9qekzd90X4djaT"
-const REDIRECT_URI = "https://nexus-api-lx74.onrender.com/auth/discord/callback"
+const REDIRECT_URI = "https://nexus-api-production-8078.up.railway.app/auth/discord/callback"
 
 // =========================
 // WHITELIST
